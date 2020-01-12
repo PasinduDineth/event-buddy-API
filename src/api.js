@@ -1,7 +1,7 @@
-const express  = require('express');
-const bodyParser = require('body-parser');
-const connection        = require('./connection');
-const app            = express();
+import express from "express"
+import bodyParser from "body-parser"
+import connection from "./connection"
+const app = express();
 const port = 8000;
 
 
