@@ -1,13 +1,12 @@
 const express  = require('express');
-var bodyParser = require('body-parser');
-var connection        = require('./connection');
+const bodyParser = require('body-parser');
+const connection        = require('./connection');
 const app            = express();
-
 const port = 8000;
 
 
 app.use(function(req, res, next) {
-    var oneof = false;
+    let oneof = false;
     if(req.headers.origin) {
         res.header('Access-Control-Allow-Origin', req.headers.origin);
         oneof = true;
@@ -68,12 +67,12 @@ function getDateTime(){
 }
 
 app.post('/addPackage', function(request, response) {
-    var packageName = request.body.packageName;
-    var packageUniqueCode = request.body.packageUniqueCode;
-    var packageDescription = request.body.packageDescription;
-    var packageAddedDate = getDateTime();
-    var packagePrice = request.body.packagePrice;
-    var packageOwnerID = request.body.packageOwnerID;
+    let packageName = request.body.packageName;
+    let packageUniqueCode = request.body.packageUniqueCode;
+    let packageDescription = request.body.packageDescription;
+    let packageAddedDate = getDateTime();
+    let packagePrice = request.body.packagePrice;
+    let packageOwnerID = request.body.packageOwnerID;
     if (packageName && packageUniqueCode && packageDescription && packageAddedDate && packagePrice && packageOwnerID) {
         connection.query(`INSERT INTO packages (packageName, packageUniqueCode, packageDescription, packageAddedDate, packagePrice, packageOwnerID)VALUES(?, ?, ?, ?, ?, ?)`, [packageName, packageUniqueCode, packageDescription, packageAddedDate, packagePrice, packageOwnerID], function(error, results, fields) {
             if (error) {
