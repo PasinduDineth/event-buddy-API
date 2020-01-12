@@ -1,7 +1,6 @@
-
-const express        = require('express');
+const express  = require('express');
 var bodyParser = require('body-parser');
-var con        = require('./connection');
+var connection        = require('./connection');
 const app            = express();
 
 const port = 8000;
@@ -38,20 +37,62 @@ app.use(bodyParser.urlencoded({
 }));
 app.use(bodyParser.json());
 app.listen(port, () => {
-  console.log('We are live on ' + port);
+    console.log('We are live on ' + port);
 });
 
-app.post('/echo', function(req, res){
-    console.log('checking login ->'+req.body.name)
-    // res.json({"Error": false,"Message":req.body.name});
-    var sql = "SELECT * FROM user WHERE username = '" + req.body.name + "'";
-       con.query(sql, function(err,rows){
-           if(err){
-           	res.json({"Error": true,"Message":err});
-           } 
-           else{
-            res.json({"Error": false,"Message":rows});
-         }
-        });
+function getDateTime(){
+    let date_ob = new Date();
 
-})
+// current date
+// adjust 0 before single digit date
+    let date = ("0" + date_ob.getDate()).slice(-2);
+
+// current month
+    let month = ("0" + (date_ob.getMonth() + 1)).slice(-2);
+
+// current year
+    let year = date_ob.getFullYear();
+
+// current hours
+    let hours = date_ob.getHours();
+
+// current minutes
+    let minutes = date_ob.getMinutes();
+
+// current seconds
+    let seconds = date_ob.getSeconds();
+
+    let dateTime = year + "-" + month + "-" + date + " " + hours + ":" + minutes + ":" + seconds;
+
+    return dateTime;
+}
+
+app.post('/addPackage', function(request, response) {
+    var packageName = request.body.packageName;
+    var packageUniqueCode = request.body.packageUniqueCode;
+    var packageDescription = request.body.packageDescription;
+    var packageAddedDate = getDateTime();
+    var packagePrice = request.body.packagePrice;
+    var packageOwnerID = request.body.packageOwnerID;
+    if (packageName && packageUniqueCode && packageDescription && packageAddedDate && packagePrice && packageOwnerID) {
+        connection.query(`INSERT INTO packages (packageName, packageUniqueCode, packageDescription, packageAddedDate, packagePrice, packageOwnerID)VALUES(?, ?, ?, ?, ?, ?)`, [packageName, packageUniqueCode, packageDescription, packageAddedDate, packagePrice, packageOwnerID], function(error, results, fields) {
+            if (error) {
+                // some error occured
+                if(error.code == "ER_DUP_ENTRY"){
+                    response.json({"Error": true,"Message":"You have already added this product to list. Please use another name if you need."});
+                    response.end();
+                }else{
+                    response.json({"Error": true,"Message":"Something went wrong with SQL queary. Please contact support."});
+                    response.end();
+                }
+            } else {
+                // successfully inserted into db
+                response.json({"Error": false,"Message":"Success!"});
+                response.end();
+            }
+        });
+    } else {
+        response.json({"Error": true,"Message":"Please fill all the feilds."});
+        response.end();
+    }
+});
