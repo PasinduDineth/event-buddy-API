@@ -18,6 +18,6 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "babel --presets es2015 -d lib/ src",
-    "start": "node lib/api.js"
+    "start": "nodemon --exec babel-node src/api.js"
   }
 }

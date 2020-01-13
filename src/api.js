@@ -83,10 +83,10 @@ app.post('/addPackage', function(request, response) {
             if (error) {
                 // some error occurred
                 if(error.code === "ER_DUP_ENTRY"){
-                    response.json({"Error": true,"Message":"You have already added this product to list. Please use another name if you need."});
+                    response.json({"Error": true,"Message":"You have already added this package to list. Please use another unique code if you need."});
                     response.end();
                 }else{
-                    response.json({"Error": true,"Message":"Something went wrong with SQL queary. Please contact support."});
+                    response.json({"Error": true,"Message":"Something went wrong with SQL query. Please contact support."});
                     response.end();
                 }
             } else {
@@ -103,14 +103,14 @@ app.post('/addPackage', function(request, response) {
 
 app.post('/auth', function(request, response) {
     /**
-     * @param {{Email:string}} Email
-     * @param {{Password:string}} Password
+     * @param {{email:string}} email
+     * @param {{password:string}} password
      */
-    let email = request.body.Email;
-    let password = request.body.Password;
+    let email = request.body.email;
+    let password = request.body.password;
 
     if (email && password) {
-        connection.query('SELECT * FROM users WHERE Email = ? AND Password = ?', [email, password], function(error, results) {
+        connection.query('SELECT * FROM users WHERE userEmail = ? AND userPassword = ?', [email, password], function(error, results) {
             if(error){
                 response.json({"Error": true,"Message":"Something went wrong with SQL query. Please contact support."});
                 response.end();
@@ -131,15 +131,15 @@ app.post('/auth', function(request, response) {
 
 app.post('/deletePackage', function(request, response) {
     /**
-     * @param {{ProductID:number}} ProductID
-     * @param {{UserID:number}} UserID
+     * @param {{packageID:number}} packageID
+     * @param {{userID:number}} userID
      */
-    let ProductID = request.body.ProductID;
-    let userId = request.body.UserID;
-    if (ProductID && userId) {
-        connection.query("DELETE FROM products WHERE ProductID = '" + ProductID + "' &&  UserID = '" + userId + "' ", function(error, results) {
+    let packageID = request.body.packageID;
+    let packageOwnerID = request.body.packageOwnerID;
+    if (packageID && packageOwnerID) {
+        connection.query("DELETE FROM packages WHERE packageID = '" + packageID + "' &&  packageOwnerID = '" + packageOwnerID + "' ", function(error, results) {
             if (error) {
-                response.json({"Error": false,"Message":"Something went wrong with SQL quary. Please contact support!"});
+                response.json({"Error": false,"Message":"Something went wrong with SQL query. Please contact support!"});
                 response.end();
             }
             else{
@@ -160,20 +160,21 @@ app.post('/deletePackage', function(request, response) {
     }
 });
 
-app.post('/ChangeStatusOfProduct', function(request, response) {
+app.post('/changeStatusOfProduct', function(request, response) {
     /**
-     * @param {{ProductID:number}} ProductID
-     * @param {{UserID:number}} UserID
-     * @param {{NewStatus:boolean}} false
+     * @param {{packageID:number}} packageID
+     * @param {{packageOwnerID:number}} packageOwnerID
+     * @param {{newStatus:boolean}} false
      */
-    let ProductID = request.body.ProductID;
-    let userId = request.body.UserID;
-    let NewStatus = request.body.NewStatus;
+    let packageID = request.body.packageID;
+    let packageOwnerID = request.body.packageOwnerID;
+    let newStatus = request.body.newStatus;
 
-    if (ProductID && userId && NewStatus) {
-        connection.query("UPDATE products SET Status = '" + NewStatus + "' WHERE ProductID = '" + ProductID + "' &&  UserID = '" + userId + "' ", function(error, results) {
+    if (packageID && packageOwnerID && newStatus) {
+        connection.query("UPDATE packages SET packageStatus = '" + newStatus + "' WHERE packageID = '" + packageID + "' &&  packageOwnerID = '" + packageOwnerID + "' ", function(error, results) {
             if (error) {
-                response.json({"Error": false,"Message":"Something went wrong with SQL queary. Please contact support!"});
+                console.log(error);
+                response.json({"Error": false,"Message":"Something went wrong with SQL query. Please contact support!"});
                 response.end();
             }
             else{
@@ -183,7 +184,7 @@ app.post('/ChangeStatusOfProduct', function(request, response) {
                     response.end();
                 } else {
                     // successfully inserted into db
-                    response.json({"Error": false,"Message":"Unable to delete product. Please contact support!"});
+                    response.json({"Error": false,"Message":"Unable to change status. Please contact support!"});
                     response.end();
                 }
             }
@@ -194,7 +195,7 @@ app.post('/ChangeStatusOfProduct', function(request, response) {
     }
 });
 
-app.post('/EditPackage', function(request, response) {
+app.post('/EditPackage', function(request) {
     /**
      * @param {{packageName:string}} packageName
      * @param {{packageUniqueCode:number}} packageUniqueCode
@@ -232,4 +233,42 @@ app.post('/EditPackage', function(request, response) {
     //     response.json({"Error": true,"Message":"Unable to update product. Empty parameters."});
     //     response.end();
     // }
+});
+
+// endpoint is working. Need to add profile info such as images, address, long lat, ect
+app.post('/register', function(request, response) {
+    /**
+     * @param {{userEmail:string}} userEmail
+     * @param {{userPassword:number}} userPassword
+     * @param {{companyName:string}} companyName
+     * @param {{telephone:number}} telephone
+     */
+
+    let userEmail = request.body.userEmail;
+    let userPassword = request.body.userPassword;
+    let companyName = request.body.companyName;
+    let date = getDateTime();
+    let telephone = request.body.telephone;
+
+    if (userEmail && userPassword && companyName && date && telephone) {
+        connection.query(`INSERT INTO users (userEmail, userPassword, companyName, registeredDate, telephone)VALUES(?, ?, ?, ?, ?)`, [userEmail , userPassword, companyName, date, telephone], function(error) {
+            if (error) {
+                // some error
+                if(error.code === "ER_DUP_ENTRY"){
+                    response.json({"Error": true,"Message":"You have already registered using this email. Please use another email address."});
+                    response.end();
+                }else{
+                    response.json({"Error": true,"Message":"Something went wrong with SQL query. Please contact support."});
+                    response.end();
+                }
+            } else {
+                // successfully inserted into db
+                response.json({"Error": false,"Message":"Success!"});
+                response.end();
+            }
+        });
+    } else {
+        response.json({"Error": true,"Message":"Please fill all the fields."});
+        response.end();
+    }
 });
