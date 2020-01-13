@@ -100,3 +100,136 @@ app.post('/addPackage', function(request, response) {
         response.end();
     }
 });
+
+app.post('/auth', function(request, response) {
+    /**
+     * @param {{Email:string}} Email
+     * @param {{Password:string}} Password
+     */
+    let email = request.body.Email;
+    let password = request.body.Password;
+
+    if (email && password) {
+        connection.query('SELECT * FROM users WHERE Email = ? AND Password = ?', [email, password], function(error, results) {
+            if(error){
+                response.json({"Error": true,"Message":"Something went wrong with SQL query. Please contact support."});
+                response.end();
+            }else{
+                if (results.length > 0) {
+                    response.json({"Error": false,"Message":"Success!"});
+                } else {
+                    response.json({"Error": true,"Message":"Incorrect Username and/or Password!"});
+                }
+                response.end();
+            }
+        });
+    } else {
+        response.send('Please enter Username and Password!');
+        response.end();
+    }
+});
+
+app.post('/deletePackage', function(request, response) {
+    /**
+     * @param {{ProductID:number}} ProductID
+     * @param {{UserID:number}} UserID
+     */
+    let ProductID = request.body.ProductID;
+    let userId = request.body.UserID;
+    if (ProductID && userId) {
+        connection.query("DELETE FROM products WHERE ProductID = '" + ProductID + "' &&  UserID = '" + userId + "' ", function(error, results) {
+            if (error) {
+                response.json({"Error": false,"Message":"Something went wrong with SQL quary. Please contact support!"});
+                response.end();
+            }
+            else{
+                if (results.affectedRows !== 0) {
+                    // some error
+                    response.json({"Error": false,"Message":"Success!"});
+                    response.end();
+                } else {
+                    // successfully inserted into db
+                    response.json({"Error": false,"Message":"Unable to delete product. Please contact support!"});
+                    response.end();
+                }
+            }
+        });
+    } else {
+        response.json({"Error": true,"Message":"Please fill all the fields."});
+        response.end();
+    }
+});
+
+app.post('/ChangeStatusOfProduct', function(request, response) {
+    /**
+     * @param {{ProductID:number}} ProductID
+     * @param {{UserID:number}} UserID
+     * @param {{NewStatus:boolean}} false
+     */
+    let ProductID = request.body.ProductID;
+    let userId = request.body.UserID;
+    let NewStatus = request.body.NewStatus;
+
+    if (ProductID && userId && NewStatus) {
+        connection.query("UPDATE products SET Status = '" + NewStatus + "' WHERE ProductID = '" + ProductID + "' &&  UserID = '" + userId + "' ", function(error, results) {
+            if (error) {
+                response.json({"Error": false,"Message":"Something went wrong with SQL queary. Please contact support!"});
+                response.end();
+            }
+            else{
+                if (results.affectedRows !== 0) {
+                    // some error
+                    response.json({"Error": false,"Message":"Success!"});
+                    response.end();
+                } else {
+                    // successfully inserted into db
+                    response.json({"Error": false,"Message":"Unable to delete product. Please contact support!"});
+                    response.end();
+                }
+            }
+        });
+    } else {
+        response.json({"Error": true,"Message":"Please fill all the fields."});
+        response.end();
+    }
+});
+
+app.post('/EditPackage', function(request, response) {
+    /**
+     * @param {{packageName:string}} packageName
+     * @param {{packageUniqueCode:number}} packageUniqueCode
+     * @param {{packageDescription:string}} packageDescription
+     * @param {{packagePrice:number}} packagePrice
+     * @param {{packageOwnerID:number}} packageOwnerID
+     */
+    let packageName = request.body.packageName;
+    let packageUniqueCode = request.body.packageUniqueCode;
+    let packageDescription = request.body.packageDescription;
+    let packagePrice = request.body.packagePrice;
+    let packageOwnerID = request.body.packageOwnerID;
+
+    // if (ProductID && userId ) {
+    //     connection.query("UPDATE products SET ProductName = '" + productName + "', QTYType = '" + QTYType + "' , CurrentStock = '" + stock + "' , UnitePrice = '" + unitePrice + "' WHERE ProductID = '" + ProductID + "' &&  UserID = '" + userId + "' ", function(error, results, fields) {
+    //         console.log("res",results)
+    //         console.log("ERRORRRRR",error)
+    //         if (error) {
+    //             response.json({"Error": false,"Message":"Something went wrong with SQL queary. Please contact support!"});
+    //             response.end();
+    //         }
+    //         else{
+    //             if (results.affectedRows != 0) {
+    //                 // some error occured
+    //                 response.json({"Error": false,"Message":"Success!"});
+    //                 response.end();
+    //             } else {
+    //                 // successfully inserted into db
+    //                 response.json({"Error": false,"Message":"Unable to update product. Please contact support!"});
+    //                 response.end();
+    //             }
+    //         }
+    //     });
+    // } else {
+    //     response.json({"Error": true,"Message":"Unable to update product. Empty parameters."});
+    //     response.end();
+    // }
+});
