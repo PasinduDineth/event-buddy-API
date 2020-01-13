@@ -24,7 +24,7 @@ app.use(function(req, res, next) {
     }
 
     // intercept OPTIONS method
-    if (oneof && req.method == 'OPTIONS') {
+    if (oneof && req.method === 'OPTIONS') {
         res.sendStatus(200);
     }
     else {
@@ -39,7 +39,7 @@ app.listen(port, () => {
     console.log('We are live on ' + port);
 });
 
-function getDateTime(){
+const getDateTime =() => {
     let date_ob = new Date();
 
 // current date
@@ -61,12 +61,17 @@ function getDateTime(){
 // current seconds
     let seconds = date_ob.getSeconds();
 
-    let dateTime = year + "-" + month + "-" + date + " " + hours + ":" + minutes + ":" + seconds;
-
-    return dateTime;
-}
+    return year + "-" + month + "-" + date + " " + hours + ":" + minutes + ":" + seconds;
+};
 
 app.post('/addPackage', function(request, response) {
+    /**
+     * @param {{packageName:string}} packageName
+     * @param {{packageUniqueCode:number}} packageUniqueCode
+     * @param {{packageDescription:string}} packageDescription
+     * @param {{packagePrice:number}} packagePrice
+     * @param {{packageOwnerID:number}} packageOwnerID
+     */
     let packageName = request.body.packageName;
     let packageUniqueCode = request.body.packageUniqueCode;
     let packageDescription = request.body.packageDescription;
@@ -74,10 +79,10 @@ app.post('/addPackage', function(request, response) {
     let packagePrice = request.body.packagePrice;
     let packageOwnerID = request.body.packageOwnerID;
     if (packageName && packageUniqueCode && packageDescription && packageAddedDate && packagePrice && packageOwnerID) {
-        connection.query(`INSERT INTO packages (packageName, packageUniqueCode, packageDescription, packageAddedDate, packagePrice, packageOwnerID)VALUES(?, ?, ?, ?, ?, ?)`, [packageName, packageUniqueCode, packageDescription, packageAddedDate, packagePrice, packageOwnerID], function(error, results, fields) {
+        connection.query(`INSERT INTO packages (packageName, packageUniqueCode, packageDescription, packageAddedDate, packagePrice, packageOwnerID)VALUES(?, ?, ?, ?, ?, ?)`, [packageName, packageUniqueCode, packageDescription, packageAddedDate, packagePrice, packageOwnerID], function(error) {
             if (error) {
-                // some error occured
-                if(error.code == "ER_DUP_ENTRY"){
+                // some error occurred
+                if(error.code === "ER_DUP_ENTRY"){
                     response.json({"Error": true,"Message":"You have already added this product to list. Please use another name if you need."});
                     response.end();
                 }else{
@@ -91,7 +96,7 @@ app.post('/addPackage', function(request, response) {
             }
         });
     } else {
-        response.json({"Error": true,"Message":"Please fill all the feilds."});
+        response.json({"Error": true,"Message":"Please fill all the fields."});
         response.end();
     }
 });
