@@ -195,44 +195,47 @@ app.post('/changeStatusOfProduct', function(request, response) {
     }
 });
 
-app.post('/EditPackage', function(request) {
+app.post('/editPackage', function(request, response) {
     /**
      * @param {{packageName:string}} packageName
      * @param {{packageUniqueCode:number}} packageUniqueCode
      * @param {{packageDescription:string}} packageDescription
      * @param {{packagePrice:number}} packagePrice
      * @param {{packageOwnerID:number}} packageOwnerID
+     * @param {{packageID:number}} packageID
+     * @param {{packageStatus:number}} false
      */
     let packageName = request.body.packageName;
+    let packageID = request.body.packageID;
     let packageUniqueCode = request.body.packageUniqueCode;
     let packageDescription = request.body.packageDescription;
     let packagePrice = request.body.packagePrice;
     let packageOwnerID = request.body.packageOwnerID;
+    let packageStatus = request.body.packageStatus;
 
-    // if (ProductID && userId ) {
-    //     connection.query("UPDATE products SET ProductName = '" + productName + "', QTYType = '" + QTYType + "' , CurrentStock = '" + stock + "' , UnitePrice = '" + unitePrice + "' WHERE ProductID = '" + ProductID + "' &&  UserID = '" + userId + "' ", function(error, results, fields) {
-    //         console.log("res",results)
-    //         console.log("ERRORRRRR",error)
-    //         if (error) {
-    //             response.json({"Error": false,"Message":"Something went wrong with SQL queary. Please contact support!"});
-    //             response.end();
-    //         }
-    //         else{
-    //             if (results.affectedRows != 0) {
-    //                 // some error occured
-    //                 response.json({"Error": false,"Message":"Success!"});
-    //                 response.end();
-    //             } else {
-    //                 // successfully inserted into db
-    //                 response.json({"Error": false,"Message":"Unable to update product. Please contact support!"});
-    //                 response.end();
-    //             }
-    //         }
-    //     });
-    // } else {
-    //     response.json({"Error": true,"Message":"Unable to update product. Empty parameters."});
-    //     response.end();
-    // }
+    if (packageID && packageOwnerID && packageName && packageStatus && packageUniqueCode && "packageDescription" && packagePrice ) {
+        connection.query("UPDATE packages SET packageName = '" + packageName + "', packageUniqueCode = '" + packageUniqueCode + "' , packageDescription = '" + packageDescription + "' ,packageStatus = '" + packageStatus + "', packagePrice = '" + packagePrice + "' WHERE packageID = '" + packageID + "' &&  packageOwnerID = '" + packageOwnerID + "' ", function(error, results, fields) {
+            if (error) {
+                console.log(error);
+                response.json({"Error": false,"Message":"Something went wrong with SQL query. Please contact support!"});
+                response.end();
+            }
+            else{
+                if (results.affectedRows !== 0) {
+                    // some error
+                    response.json({"Error": false,"Message":"Success!"});
+                    response.end();
+                } else {
+                    // successfully inserted into db
+                    response.json({"Error": false,"Message":"Unable to update product. Please contact support!"});
+                    response.end();
+                }
+            }
+        });
+    } else {
+        response.json({"Error": true,"Message":"Unable to update product. Empty parameters."});
+        response.end();
+    }
 });
 
 // endpoint is working. Need to add profile info such as images, address, long lat, ect
