@@ -1,9 +1,12 @@
 import express from "express"
 import bodyParser from "body-parser"
 import connection from "./connection"
+const fileUpload = require('express-fileupload');
+var async = require("async");
+import _ from 'lodash';
 const app = express();
 const port = 8000;
-
+const fs = require('fs');
 
 app.use(function(req, res, next) {
     let oneof = false;
@@ -35,10 +38,10 @@ app.use(bodyParser.urlencoded({
     extended: true
 }));
 app.use(bodyParser.json());
+app.use(fileUpload());
 app.listen(port, () => {
     console.log('We are live on ' + port);
 });
-
 const getDateTime =() => {
     let date_ob = new Date();
 
@@ -64,6 +67,7 @@ const getDateTime =() => {
     return year + "-" + month + "-" + date + " " + hours + ":" + minutes + ":" + seconds;
 };
 
+// need to add images to this route
 app.post('/addPackage', function(request, response) {
     /**
      * @param {{packageName:string}} packageName
@@ -76,25 +80,112 @@ app.post('/addPackage', function(request, response) {
     let packageUniqueCode = request.body.packageUniqueCode;
     let packageDescription = request.body.packageDescription;
     let packageAddedDate = getDateTime();
+    // console.log(packageAddedDate)
     let packagePrice = request.body.packagePrice;
     let packageOwnerID = request.body.packageOwnerID;
+    let imagesList = request.files.images;
+    // console.log(imagesList)
+    // imagesList[0].map( image => {
+    //     // Use the mv() method to place the file somewhere on your server
+    // ------------------------------------------------
+    // const path = __dirname + '/uploads/' + imagesList.name
+    // const path = __dirname + '/uploads/'
+    // imagesList.map( el => {
+    //         el.mv(path + el.name)
+    // });
+    // response.send('File uploaded!');
+    // response.end();
+
     if (packageName && packageUniqueCode && packageDescription && packageAddedDate && packagePrice && packageOwnerID) {
-        connection.query(`INSERT INTO packages (packageName, packageUniqueCode, packageDescription, packageAddedDate, packagePrice, packageOwnerID)VALUES(?, ?, ?, ?, ?, ?)`, [packageName, packageUniqueCode, packageDescription, packageAddedDate, packagePrice, packageOwnerID], function(error) {
-            if (error) {
-                // some error occurred
-                if(error.code === "ER_DUP_ENTRY"){
-                    response.json({"Error": true,"Message":"You have already added this package to list. Please use another unique code if you need."});
-                    response.end();
-                }else{
-                    response.json({"Error": true,"Message":"Something went wrong with SQL query. Please contact support."});
+        const path = __dirname + '/uploads/';
+        const imagesData = [];
+        const imagesError = [];
+        async.each(imagesList, function(el, callback) {
+            el.mv(path + packageAddedDate.toString() + el.name, function(err) {
+                if(err) {
+                    imagesError.push(packageAddedDate.toString() + el.name)
+                    return callback(e);
+                }
+                else {
+                    imagesData.push({"imageName": packageAddedDate.toString() + el.name, "location": "uploads/"+ packageAddedDate.toString() + el.name})
+                    callback();
+                }
+            });
+        }, function(err) {
+            if( err ) {
+              // One of the iterations produced an error.
+              // All processing will now stop.
+              console.log('A file failed to process');
+            } else {
+              console.log('All files have been processed successfully', imagesData);
+              // sending data to stored procedure.
+              connection.query('CALL insert_images(?,?,?,?,?,?,?)', [packageName, packageUniqueCode, packageAddedDate, packagePrice, packageDescription, packageOwnerID, JSON.stringify(imagesData)], function(error) {
+                if (error) {
+                    console.log("ERROR", error)
+                    // some error occurred
+                    if(error.code === "ER_DUP_ENTRY"){
+                        response.json({"Error": true,"Message":"You have already added this package to list. Please use another unique code if you need."});
+                        response.end();
+                    }else{
+                        response.json({"Error": true,"Message":"Something went wrong with SQL query. Please contact support."});
+                        response.end();
+                    }
+                } else {
+                    // successfully inserted into db
+                    response.json({"Error": false,"Message":"Success!"});
                     response.end();
                 }
-            } else {
-                // successfully inserted into db
-                response.json({"Error": false,"Message":"Success!"});
-                response.end();
+              });
             }
         });
+        // imagesList.map( el => {
+        //     el.mv(path + packageAddedDate.toString() + el.name, function(err) {
+        //         if(err) {
+        //             console.log("sss")
+        //             imagesError.concat([el.name])
+        //         }
+        //         else {
+        //             console.log("ddd")
+        //             // imagesData.push({"imageName": el.name, "location": "uploads/"+ el.name})
+        //             imagesData.concat(["sssaa"])
+        //         }
+        //     });
+        // });
+        // sending data to stored procedure.
+        // connection.query('CALL insert_images(?,?,?,?,?,?,?)', [packageName, packageUniqueCode, packageAddedDate, packagePrice, packageDescription, packageOwnerID], function(error) {
+        //     if (error) {
+        //         // some error occurred
+        //         if(error.code === "ER_DUP_ENTRY"){
+        //             response.json({"Error": true,"Message":"You have already added this package to list. Please use another unique code if you need."});
+        //             response.end();
+        //         }else{
+        //             response.json({"Error": true,"Message":"Something went wrong with SQL query. Please contact support."});
+        //             response.end();
+        //         }
+        //     } else {
+        //         // successfully inserted into db
+        //         response.json({"Error": false,"Message":"Success!"});
+        //         response.end();
+        //     }
+        // });
+        // response.send('File uploaded!');
+        // response.end();
+        // connection.query(`INSERT INTO packages (packageName, packageUniqueCode, packageDescription, packageAddedDate, packagePrice, packageOwnerID)VALUES(?, ?, ?, ?, ?, ?)`, [packageName, packageUniqueCode, packageDescription, packageAddedDate, packagePrice, packageOwnerID], function(error) {
+        //     if (error) {
+        //         // some error occurred
+        //         if(error.code === "ER_DUP_ENTRY"){
+        //             response.json({"Error": true,"Message":"You have already added this package to list. Please use another unique code if you need."});
+        //             response.end();
+        //         }else{
+        //             response.json({"Error": true,"Message":"Something went wrong with SQL query. Please contact support."});
+        //             response.end();
+        //         }
+        //     } else {
+        //         // successfully inserted into db
+        //         response.json({"Error": false,"Message":"Success!"});
+        //         response.end();
+        //     }
+        // });
     } else {
         response.json({"Error": true,"Message":"Please fill all the fields."});
         response.end();
